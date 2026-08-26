@@ -170,51 +170,67 @@ async def process_moderation(callback: CallbackQuery):
             logging.error(f"Publish error: {e}")
             await callback.answer(f"Ошибка публикации: {e}", show_alert=True)
 
-    elif action == "reject":
+    if action == "accept":
         try:
+            # Получаем оригинальное сообщение из чата с тейками
+            original_msg = await bot.get_message(chat_id=take_info["chat_id"], message_id=take_info["msg_id"])
+            
+            # Шапка со ссылкой на твоего бота (юзернейм бота пропиши сюда же без @)
+            bot_username = "misaraid_bot" # ЗАМЕНИ НА СВОЙ ЮЗЕРНЕЙМ БОТА
+            header = f"<a href='https://t.me/{bot_username}'>Мисабот</a> || 🖤\n\n"
+
+            if original_msg.text:
+                # Если тейк — текст
+                await bot.send_message(
+                    chat_id=RAID_CHANNEL_ID,
+                    text=header + original_msg.text,
+                    parse_mode="HTML",
+                    disable_web_page_preview=True
+                )
+            elif original_msg.photo:
+                # Если тейк — фото
+                photo_id = original_msg.photo[-1].file_id
+                caption = header + (original_msg.caption or "")
+                await bot.send_photo(
+                    chat_id=RAID_CHANNEL_ID,
+                    photo=photo_id,
+                    caption=caption,
+                    parse_mode="HTML"
+                )
+            elif original_msg.video:
+                # Если тейк — видео
+                video_id = original_msg.video.file_id
+                caption = header + (original_msg.caption or "")
+                await bot.send_video(
+                    chat_id=RAID_CHANNEL_ID,
+                    video=video_id,
+                    caption=caption,
+                    parse_mode="HTML"
+                )
+            else:
+                # Универсальный вариант для остальных файлов
+                await bot.copy_message(
+                    chat_id=RAID_CHANNEL_ID,
+                    from_chat_id=take_info["chat_id"],
+                    message_id=take_info["msg_id"]
+                )
+
+            # Начисляем конфетки автору
+            user = get_user(target_user_id)
+            user["balance"] += 10
+            
+            # Уведомляем автора
             await bot.send_message(
                 target_user_id,
-                "К сожалению, ваш тейк был отклонен администрацией.",
+                "Ваш тейк успешно был принят в канал.\nНачислено: +10 конфет",
                 parse_mode=ParseMode.MARKDOWN
             )
-            await callback.message.edit_text(f"{callback.message.text}\n\nОТКЛОНЕНО администратором @{callback.from_user.username or 'admin'}")
+            
+            await callback.message.edit_text(f"{callback.message.text}\n\nПРИНЯТО администратором @{callback.from_user.username or 'admin'}")
             del pending_takes[msg_id]
-        except Exception:
-            pass
-
-    await callback.answer()
-
-async def play_game(message: Message, game_type: str, bet: int):
-    user = get_user(message.from_user.id, message.from_user.username)
-
-    if user["balance"] < bet:
-        await message.answer(f"У тебя недостаточно конфет. Твой баланс: {user['balance']} конфет")
-        return
-
-    user["balance"] -= bet
-
-    if game_type == "dice":
-        msg = await message.answer_dice(emoji="🎲")
-        await asyncio.sleep(4)
-        val = msg.dice.value
-        if val >= 4:
-            win = bet * 2
-            user["balance"] += win
-            await message.answer(f"Выпало {val}. Выигрыш: {win} конфет. Баланс: {user['balance']} конфет")
-        else:
-            await message.answer(f"Выпало {val}. Ставка сгорела. Баланс: {user['balance']} конфет")
-
-    elif game_type == "darts":
-        msg = await message.answer_dice(emoji="🎯")
-        await asyncio.sleep(4)
-        val = msg.dice.value
-        if val >= 4:
-            win = bet * 3
-            user["balance"] += win
-            await message.answer(f"В яблочко. Выигрыш: {win} конфет. Баланс: {user['balance']} конфет")
-        else:
-            await message.answer(f"Мимо центра. Баланс: {user['balance']} конфет")
-
+        except Exception as e:
+            logging.error(f"Publish error: {e}")
+            await callback.answer(f"Ошибка публикации: {e}", show_alert=True)
     elif game_type == "slot":
         msg = await message.answer_dice(emoji="🎰")
         await asyncio.sleep(3)
