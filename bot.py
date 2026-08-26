@@ -172,49 +172,61 @@ async def process_moderation(callback: CallbackQuery):
 
     if action == "accept":
         try:
-            # Получаем оригинальное сообщение от пользователя
-            original_msg = await bot.get_message(chat_id=take_info["chat_id"], message_id=take_info["msg_id"])
-            
-            # Твоя шапка со ссылкой на бота (измени "misaraid_bot" на точный юзернейм своего бота без @)
-            bot_username = "misamsa_bot" 
+            # Юзернейм твоего бота без собаки (@)
+            bot_username = "ТУТ_ЮЗЕРНЕЙМ_БОТА" 
             header = f"<a href='https://t.me/{bot_username}'>Мисабот</a> ||\n\n"
 
-            if original_msg.text:
-                # Если это просто текст
+            # Проверяем, что было переслано в админ-чат
+            admin_msg = callback.message
+            
+            # Достаем текст или подпись из админ-сообщения (которое бот пересылал при подаче)
+            text_content = admin_msg.text or admin_msg.caption or ""
+            
+            # Проверяем, есть ли медиа в исходном сообщении через словарик take_info
+            # (вытаскиваем прямо из message_id оригинального сообщения)
+            original_chat_id = take_info["chat_id"]
+            original_msg_id = take_info["msg_id"]
+
+            # Пытаемся скопировать или отправить заново
+            # Если это было фото/видео, aiogram позволяет отправить его по file_id, но проще сделать проще:
+            # Давай используем чистый forward_message в канал от имени бота, но с заменой текста через отправку
+            
+            # Пробуем отправить просто текстом, если это был текст
+            if admin_msg.text:
+                # Очищаем от лишнего мусора админской разметки если нужно
+                clean_text = admin_msg.text.split("\n\n✅")[0] # убираем кнопки/статусы если прицепились
                 await bot.send_message(
                     chat_id=RAID_CHANNEL_ID,
-                    text=header + original_msg.text,
+                    text=header + clean_text,
                     parse_mode="HTML",
                     disable_web_page_preview=True
                 )
-            elif original_msg.photo:
-                # Если это фото
-                photo_id = original_msg.photo[-1].file_id
-                caption = header + (original_msg.caption or "")
-                await bot.send_photo(
-                    chat_id=RAID_CHANNEL_ID,
-                    photo=photo_id,
-                    caption=caption,
-                    parse_mode="HTML"
-                )
-            elif original_msg.video:
-                # Если это видео
-                video_id = original_msg.video.file_id
-                caption = header + (original_msg.caption or "")
-                await bot.send_video(
-                    chat_id=RAID_CHANNEL_ID,
-                    video=video_id,
-                    caption=caption,
-                    parse_mode="HTML"
-                )
             else:
-                # Для всех остальных типов файлов (документы, анимации и т.д.)
+                # Если там фотка или видео, копируем через copy_message, но поверх неё текст не накинуть в HTML без скачивания.
+                # Поэтому делаем так: пересылаем исходное сообщение, а шапку делаем через копирование
                 await bot.copy_message(
                     chat_id=RAID_CHANNEL_ID,
-                    from_chat_id=take_info["chat_id"],
-                    message_id=take_info["msg_id"]
+                    from_chat_id=original_chat_id,
+                    message_id=original_msg_id
                 )
 
+            # Начисляем конфетки автору
+            user = get_user(target_user_id)
+            user["balance"] += 10
+            
+            # Уведомляем автора
+            await bot.send_message(
+                target_user_id,
+                "Ваш тейк успешно был принят в канал.\nНачислено: +10 конфет",
+                parse_mode=ParseMode.MARKDOWN
+            )
+            
+            await callback.message.edit_text(f"{callback.message.text}\n\nПРИНЯТО администратором @{callback.from_user.username or 'admin'}")
+            del pending_takes[msg_id]
+        except Exception as e:
+            logging.error(f"Publish error: {e}")
+            await callback.answer(f"Ошибка публикации: {e}", show_alert=True)
+            
             # Начисляем конфетки автору
             user = get_user(target_user_id)
             user["balance"] += 10
