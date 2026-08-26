@@ -176,8 +176,8 @@ async def process_moderation(callback: CallbackQuery):
             original_msg = await bot.get_message(chat_id=take_info["chat_id"], message_id=take_info["msg_id"])
             
             # Шапка со ссылкой на твоего бота (юзернейм бота пропиши сюда же без @)
-            bot_username = "misaraid_bot" # ЗАМЕНИ НА СВОЙ ЮЗЕРНЕЙМ БОТА
-            header = f"<a href='https://t.me/{bot_username}'>Мисабот</a> || 🖤\n\n"
+            bot_username = "misamsa_bot" # ЗАМЕНИ НА СВОЙ ЮЗЕРНЕЙМ БОТА
+            header = f"<a href='https://t.me/{bot_username}'>Мисабот</a> || \n\n"
 
             if original_msg.text:
                 # Если тейк — текст
