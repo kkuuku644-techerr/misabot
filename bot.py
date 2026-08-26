@@ -11,7 +11,7 @@ TOKEN = "8965338371:AAG1ksD8FlTtaNMNcHljZENqNfijQuvT0BA"
 RAID_CHANNEL_ID = -1004404647295
 ADMIN_CHAT_ID = -1003941038109
 MY_ADMIN_ID = 7959524856
-BOT_USERNAME = "ТУТ_ЮЗЕРНЕЙМ_БОТА"  # Замени на юзернейм своего бота без @
+BOT_USERNAME = "misamsa_bot"  # Замени на юзернейм своего бота без @
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=TOKEN)
