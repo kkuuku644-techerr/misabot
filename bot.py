@@ -475,32 +475,7 @@ async def process_inline_games(callback: CallbackQuery):
         return
 
     bets = {"dice": 10, "darts": 10, "slot": 15, "bowling": 10, "basketball": 10}
-    bet = bets.get(action, 10)
-
-    await play_game(callback.from_user.id, callback.from_user.username, callback.message, action, bet)
-    await callback.answer()
-
-# --- ПЕРЕДАЧА КОНФЕТ (ОТ 5 ШТУК) ---
-@router.message(F.text.lower().startswith("передать"))
-async def cmd_transfer(message: Message):
-    sender_id = message.from_user.id
-    sender = get_user(sender_id, message.from_user.username)
-    args = message.text.split()
-
-    target_id = None
-    amount = 0
-
-    if message.reply_to_message and len(args) == 2 and args[1].isdigit():
-        target_id = message.reply_to_message.from_user.id
-        amount = int(args[1])
-        target_username = message.reply_to_message.from_user.first_name
-    elif len(args) == 3 and args[1].isdigit() and args[2].isdigit():
-        target_id = int(args[1])
-        amount = int(args[2])
-        target_username = f"ID {target_id}"
-
-    if not target_id:
-        # --- ПЕРЕДАЧА КОНФЕТ (ОТ 5 ШТУК) ---
+    bet = bets.get(action# --- ПЕРЕДАЧА КОНФЕТ (ОТ 5 ШТУК) ---
 @router.message(F.text.lower().startswith("передать"))
 async def cmd_transfer(message: Message):
     sender_id = message.from_user.id
@@ -521,29 +496,9 @@ async def cmd_transfer(message: Message):
 
     if not target_id:
         await message.answer(
-            "Ошибка: ответь на сообщение пользователя передать <сумма> либо укажи ID: передать <ID> <сумма>", 
+            "Ошибка: ответь на сообщение пользователя `передать <сумма>` либо укажи ID: `передать <ID> <сумма>`", 
             parse_mode=ParseMode.MARKDOWN
         )
-        return
-
-    if amount < 5:
-        await message.answer("Минимальная сумма для передачи составляет 5 конфет.")
-        return
-
-    if sender_id == target_id:
-        await message.answer("Нельзя передавать конфеты самому себе.")
-        return
-
-    if sender["balance"] < amount:
-        await message.answer(f"У тебя недостаточно конфет. Твой баланс: {sender['balance']} конфет")
-        return
-
-    sender["balance"] -= amount
-    target = get_user(target_id)
-    target["balance"] += amount
-
-    await message.answer(f"Успешно передано {amount} конфет игроку {target_username}. Твой баланс: {sender['balance']} конфет")
-        await message.answer("Ошибка: ответь на сообщение пользователя `передать <сумма>` либо укажи ID: `передать <ID> <сумма>`", parse_mode=ParseMode.MARKDOWN)
         return
 
     if amount < 5:
@@ -656,5 +611,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
 
