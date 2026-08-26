@@ -168,12 +168,10 @@ async def process_moderation(callback: CallbackQuery):
                 [InlineKeyboardButton(text="Мисабот || 🖤", url=f"https://t.me/{BOT_USERNAME}")]
             ])
 
-            sent_msg = await bot.copy_to(
+            sent_msg = await bot.copy_message(
                 chat_id=RAID_CHANNEL_ID,
                 from_chat_id=take_info["chat_id"],
                 message_id=take_info["msg_id"],
-                quote_entities=None,
-                quote_position=0,
                 reply_markup=channel_kb
             )
 
