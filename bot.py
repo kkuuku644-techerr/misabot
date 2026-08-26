@@ -173,7 +173,7 @@ async def process_moderation(callback: CallbackQuery):
     if action == "accept":
         try:
             # Юзернейм твоего бота без собаки (@)
-            bot_username = "ТУТ_ЮЗЕРНЕЙМ_БОТА" 
+            bot_username = "misamsa_bot" 
             header = f"<a href='https://t.me/{bot_username}'>Мисабот</a> ||\n\n"
 
             # Проверяем, что было переслано в админ-чат
