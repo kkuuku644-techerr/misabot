@@ -11,7 +11,7 @@ TOKEN = "8965338371:AAG1ksD8FlTtaNMNcHljZENqNfijQuvT0BA"
 RAID_CHANNEL_ID = -1004404647295
 ADMIN_CHAT_ID = -1003941038109
 MY_ADMIN_ID = 7959524856
-BOT_USERNAME = "misamsa_bot"  # Замени на юзернейм своего бота без @
+BOT_USERNAME = "ТУТ_ЮЗЕРНЕЙМ_БОТА"  # Замени на юзернейм своего бота без @
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=TOKEN)
@@ -260,8 +260,6 @@ async def start_mines_game(user_id: int, username: str, message: Message, bet: i
 
     user["balance"] -= bet
 
-    # Создаем поле 8x8 (64 клетки)
-    # Раскидываем 10 бомб случайным образом
     bomb_positions = random.sample(range(64), 10)
 
     game_data = {
@@ -300,7 +298,6 @@ def get_mines_keyboard(game_data):
             row_buttons.append(InlineKeyboardButton(text=text, callback_data=cb_data))
         rows.append(row_buttons)
 
-    # Нижняя кнопка управления
     if not game_data["clicked_any"]:
         rows.append([InlineKeyboardButton(text="❌ Отменить ставку", callback_data="m_cancel")])
     else:
@@ -330,7 +327,6 @@ async def process_mines_callback(callback: CallbackQuery):
         if game["clicked_any"]:
             await callback.answer("Нельзя отменить ставку после первого хода!", show_alert=True)
             return
-        # Возвращаем ставку
         user = get_user(game["user_id"])
         user["balance"] += game["bet"]
         game["game_over"] = True
@@ -364,10 +360,8 @@ async def process_mines_callback(callback: CallbackQuery):
 
         game["clicked_any"] = True
 
-        # Проверяем бомбу
         if idx in game["bombs"]:
             game["game_over"] = True
-            # Открываем все бомбы на поле
             for b_idx in game["bombs"]:
                 game["revealed"][b_idx] = True
 
@@ -382,9 +376,7 @@ async def process_mines_callback(callback: CallbackQuery):
             await callback.answer("Бууум! 💥")
             return
         else:
-            # Безопасная клетка
             game["revealed"][idx] = True
-            # Увеличиваем выигрыш (множитель зависит от количества открытых чистых клеток)
             opened_count = sum(1 for x in game["revealed"] if x) - sum(1 for b in game["bombs"] if game["revealed"][b])
             multiplier = 1.0 + (opened_count * 0.15)
             game["current_win"] = int(game["bet"] * multiplier)
@@ -469,13 +461,17 @@ async def play_game(user_id: int, username: str, message: Message, game_type: st
 async def process_inline_games(callback: CallbackQuery):
     action = callback.data.split("_")[1]
     if action == "mines":
-        # Если из меню игр нажали кнопку мины, запускаем со ставкой 20 по умолчанию
         await start_mines_game(callback.from_user.id, callback.from_user.username, callback.message, 20)
         await callback.answer()
         return
 
     bets = {"dice": 10, "darts": 10, "slot": 15, "bowling": 10, "basketball": 10}
-    bet = bets.get(action# --- ПЕРЕДАЧА КОНФЕТ (ОТ 5 ШТУК) ---
+    bet = bets.get(action, 10)
+
+    await play_game(callback.from_user.id, callback.from_user.username, callback.message, action, bet)
+    await callback.answer()
+
+# --- ПЕРЕДАЧА КОНФЕТ (ОТ 5 ШТУК) ---
 @router.message(F.text.lower().startswith("передать"))
 async def cmd_transfer(message: Message):
     sender_id = message.from_user.id
