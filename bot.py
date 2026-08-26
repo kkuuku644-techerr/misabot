@@ -172,15 +172,15 @@ async def process_moderation(callback: CallbackQuery):
 
     if action == "accept":
         try:
-            # Получаем оригинальное сообщение из чата с тейками
+            # Получаем оригинальное сообщение от пользователя
             original_msg = await bot.get_message(chat_id=take_info["chat_id"], message_id=take_info["msg_id"])
             
-            # Шапка со ссылкой на твоего бота (юзернейм бота пропиши сюда же без @)
-            bot_username = "misamsa_bot" # ЗАМЕНИ НА СВОЙ ЮЗЕРНЕЙМ БОТА
-            header = f"<a href='https://t.me/{bot_username}'>Мисабот</a> || \n\n"
+            # Твоя шапка со ссылкой на бота (измени "misaraid_bot" на точный юзернейм своего бота без @)
+            bot_username = "misamsa_bot" 
+            header = f"<a href='https://t.me/{bot_username}'>Мисабот</a> ||\n\n"
 
             if original_msg.text:
-                # Если тейк — текст
+                # Если это просто текст
                 await bot.send_message(
                     chat_id=RAID_CHANNEL_ID,
                     text=header + original_msg.text,
@@ -188,7 +188,7 @@ async def process_moderation(callback: CallbackQuery):
                     disable_web_page_preview=True
                 )
             elif original_msg.photo:
-                # Если тейк — фото
+                # Если это фото
                 photo_id = original_msg.photo[-1].file_id
                 caption = header + (original_msg.caption or "")
                 await bot.send_photo(
@@ -198,7 +198,7 @@ async def process_moderation(callback: CallbackQuery):
                     parse_mode="HTML"
                 )
             elif original_msg.video:
-                # Если тейк — видео
+                # Если это видео
                 video_id = original_msg.video.file_id
                 caption = header + (original_msg.caption or "")
                 await bot.send_video(
@@ -208,12 +208,29 @@ async def process_moderation(callback: CallbackQuery):
                     parse_mode="HTML"
                 )
             else:
-                # Универсальный вариант для остальных файлов
+                # Для всех остальных типов файлов (документы, анимации и т.д.)
                 await bot.copy_message(
                     chat_id=RAID_CHANNEL_ID,
                     from_chat_id=take_info["chat_id"],
                     message_id=take_info["msg_id"]
                 )
+
+            # Начисляем конфетки автору
+            user = get_user(target_user_id)
+            user["balance"] += 10
+            
+            # Уведомляем автора
+            await bot.send_message(
+                target_user_id,
+                "Ваш тейк успешно был принят в канал.\nНачислено: +10 конфет",
+                parse_mode=ParseMode.MARKDOWN
+            )
+            
+            await callback.message.edit_text(f"{callback.message.text}\n\nПРИНЯТО администратором @{callback.from_user.username or 'admin'}")
+            del pending_takes[msg_id]
+        except Exception as e:
+            logging.error(f"Publish error: {e}")
+            await callback.answer(f"Ошибка публикации: {e}", show_alert=True)
 
             # Начисляем конфетки автору
             user = get_user(target_user_id)
